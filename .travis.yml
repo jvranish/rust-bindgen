@@ -11,8 +11,11 @@ addons:
         - libclang-3.8-dev
         - llvm-3.8-dev
 env:
-  - LLVM_VERSION=3.4
-  - LLVM_VERSION=3.8
+  global:
+    - RUST_BACKTRACE=1
+  matrix:
+    - LLVM_VERSION=3.4
+    - LLVM_VERSION=3.8
 rust:
   - stable
   - beta
