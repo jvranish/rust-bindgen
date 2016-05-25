@@ -148,10 +148,6 @@ impl PartialEq for Cursor {
             clang_equalCursors(self.x, other.x) == 1
         }
     }
-
-    fn ne(&self, other: &Cursor) -> bool {
-        !self.eq(other)
-    }
 }
 
 impl Eq for Cursor {}
