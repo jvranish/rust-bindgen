@@ -634,10 +634,6 @@ pub fn parse(options: ClangParserOptions, logger: &Logger) -> Result<Vec<Global>
     };
 
     let ix = cx::Index::create(false, true);
-    if ix.is_null() {
-        ctx.logger.error("Clang failed to create index");
-        return Err(())
-    }
 
     let flags = CXTranslationUnit_Flags::empty();
     let unit = TranslationUnit::parse(&ix, "", &ctx.options.clang_args[..], &[], flags);
@@ -671,7 +667,6 @@ pub fn parse(options: ClangParserOptions, logger: &Logger) -> Result<Vec<Global>
     }
 
     unit.dispose();
-    ix.dispose();
 
     if ctx.err_count > 0 {
         return Err(())

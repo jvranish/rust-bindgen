@@ -331,19 +331,19 @@ pub struct Index {
 
 impl Index {
     pub fn create(pch: bool, diag: bool) -> Index {
-        unsafe {
+        let index = unsafe {
             Index { x: clang_createIndex(pch as c_int, diag as c_int) }
-        }
+        };
+        assert!(!index.x.0.is_null());
+        index
     }
+}
 
-    pub fn dispose(&self) {
+impl Drop for Index {
+    fn drop(&mut self) {
         unsafe {
             clang_disposeIndex(self.x);
         }
-    }
-
-    pub fn is_null(&self) -> bool {
-        self.x.0.is_null()
     }
 }
 
