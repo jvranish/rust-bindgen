@@ -360,21 +360,29 @@ pub struct TranslationUnit {
 
 impl TranslationUnit {
     pub fn parse(ix: &Index, file: &str, cmd_args: &[String],
-                 unsaved: &[UnsavedFile], opts: CXTranslationUnit_Flags) -> TranslationUnit {
+                 unsaved: &[UnsavedFile], opts: CXTranslationUnit_Flags) -> Result<TranslationUnit, CXErrorCode> {
         let fname = CString::new(file.as_bytes()).unwrap();
         let fname = fname.as_ptr();
         let c_args: Vec<CString> = cmd_args.iter().map(|s| CString::new(s.as_bytes()).unwrap()).collect();
         let c_args: Vec<*const c_char> = c_args.iter().map(|s| s.as_ptr()).collect();
         let mut c_unsaved: Vec<CXUnsavedFile> = unsaved.iter().map(|f| f.x).collect();
-        let tu = unsafe {
-            clang_parseTranslationUnit(ix.x, fname,
-                                       c_args.as_ptr(),
-                                       c_args.len() as c_int,
-                                       c_unsaved.as_mut_ptr(),
-                                       c_unsaved.len() as c_uint,
-                                       opts)
+
+        let mut tu = unsafe { mem::uninitialized() };
+        let error = unsafe {
+            clang_parseTranslationUnit2(ix.x, fname,
+                                        c_args.as_ptr(),
+                                        c_args.len() as c_int,
+                                        c_unsaved.as_mut_ptr(),
+                                        c_unsaved.len() as c_uint,
+                                        opts,
+                                        &mut tu)
         };
-        TranslationUnit { x: tu }
+
+        if error == CXErrorCode::Success {
+            Ok(TranslationUnit { x: tu })
+        } else {
+            Err(error)
+        }
     }
 
     pub fn reparse(&self, unsaved: &[UnsavedFile], opts: CXReparse_Flags) -> bool {
@@ -405,16 +413,6 @@ impl TranslationUnit {
         }
     }
 
-    pub fn dispose(&self) {
-        unsafe {
-            clang_disposeTranslationUnit(self.x);
-        }
-    }
-
-    pub fn is_null(&self) -> bool {
-        self.x.0.is_null()
-    }
-
     pub fn tokens(&self, cursor: &Cursor) -> Option<Vec<Token>> {
         let range = cursor.extent();
         let mut tokens = vec![];
@@ -434,6 +432,14 @@ impl TranslationUnit {
             clang_disposeTokens(self.x, token_ptr, num_tokens);
         }
         Some(tokens)
+    }
+}
+
+impl Drop for TranslationUnit {
+    fn drop(&mut self) {
+        unsafe {
+            clang_disposeTranslationUnit(self.x);
+        }
     }
 }
 

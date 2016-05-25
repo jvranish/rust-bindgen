@@ -636,11 +636,18 @@ pub fn parse(options: ClangParserOptions, logger: &Logger) -> Result<Vec<Global>
     let ix = cx::Index::create(false, true);
 
     let flags = CXTranslationUnit_Flags::empty();
-    let unit = TranslationUnit::parse(&ix, "", &ctx.options.clang_args[..], &[], flags);
-    if unit.is_null() {
-        ctx.logger.error("No input files given");
-        return Err(())
-    }
+    // TODO use try!
+    let unit = match TranslationUnit::parse(&ix,
+                                            "",
+                                            &ctx.options.clang_args,
+                                            &[],
+                                            flags) {
+        Ok(u) => u,
+        Err(e) => {
+            ctx.logger.error(&format!("Parsing error: {:?}", e));
+            return Err(());
+        },
+    };
 
     let diags = unit.diags();
     for d in &diags {
@@ -665,8 +672,6 @@ pub fn parse(options: ClangParserOptions, logger: &Logger) -> Result<Vec<Global>
         let c = ctx.builtin_defs.remove(0);
         visit_top(&c.definition(), &mut ctx, &unit);
     }
-
-    unit.dispose();
 
     if ctx.err_count > 0 {
         return Err(())
