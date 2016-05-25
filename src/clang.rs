@@ -381,14 +381,19 @@ impl TranslationUnit {
         }
     }
 
-    pub fn reparse(&self, unsaved: &[UnsavedFile], opts: CXReparse_Flags) -> bool {
+    pub fn reparse(&self, unsaved: &[UnsavedFile], opts: CXReparse_Flags) -> Result<(), CXErrorCode> {
         let mut c_unsaved: Vec<CXUnsavedFile> = unsaved.iter().map(|f| f.x).collect();
 
-        unsafe {
+        let ret = unsafe {
             clang_reparseTranslationUnit(self.x,
                                          c_unsaved.len() as c_uint,
                                          c_unsaved.as_mut_ptr(),
-                                         opts) == CXErrorCode::Success
+                                         opts)
+        };
+        if ret == CXErrorCode::Success {
+            Ok(())
+        } else {
+            Err(ret)
         }
     }
 
