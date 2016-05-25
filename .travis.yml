@@ -3,11 +3,14 @@ addons:
     apt:
       sources:
         - llvm-toolchain-precise
+        - llvm-toolchain-precise-3.5
         - llvm-toolchain-precise-3.8
         - ubuntu-toolchain-r-test
       packages:
         - libclang-3.4-dev
         - llvm-3.4-dev
+        - libclang-3.5-dev
+        - llvm-3.5-dev
         - libclang-3.8-dev
         - llvm-3.8-dev
 env:
@@ -15,6 +18,7 @@ env:
     - RUST_BACKTRACE=1
   matrix:
     - LLVM_VERSION=3.4
+    - LLVM_VERSION=3.5
     - LLVM_VERSION=3.8
 rust:
   - stable
